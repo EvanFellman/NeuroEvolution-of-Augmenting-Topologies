@@ -1,3 +1,5 @@
+import math
+import random
 #reduce<T, E>: (arr: T[], f: (E, T) => E, initValue: E): E
 def reduce(arr, f, initValue):
     if len(arr) == 0:
@@ -17,7 +19,14 @@ def maxIndex(arr):
 #fitness(nn: NeuralNetwork): number
 def fitness(nn):
     s = 0
-    for i in range(10):
+    importantTests = [([255, 0, 0], 0), ([0, 255, 0], 1), ([0, 0, 255], 2)]
+    for imp in importantTests:
+        correctAnswer = imp[1]
+        out = nn.computeOutput(imp[0])
+        wrong = [0, 1, 2]
+        wrong.pop(correctAnswer)
+        s += out[correctAnswer] - (out[wrong[0]] + out[wrong[1]])
+    for i in range(30):
         pixel = [random.random() * 255, random.random() * 255, random.random() * 255]
         correctAnswer = maxIndex(pixel)
         out = nn.computeOutput(pixel)
@@ -381,6 +390,7 @@ while True:
         final[0] += a[0]
         final[1] += a[1]
         final[2] += a[2]
+    print(final)
     maxI = maxIndex(final)
     if maxI == 0:
         print("That is mostly red.\n\n")
