@@ -26,7 +26,7 @@ def fitness(nn):
         wrong = [0, 1, 2]
         wrong.pop(correctAnswer)
         s += out[correctAnswer] - (out[wrong[0]] + out[wrong[1]])
-    for i in range(30):
+    for i in range(200):
         pixel = [random.random() * 255, random.random() * 255, random.random() * 255]
         correctAnswer = maxIndex(pixel)
         out = nn.computeOutput(pixel)
@@ -91,19 +91,9 @@ class NeuralNetwork:
                         canCalc = False
                     else:
                         acc += nodeValues[e.start] * e.weight
-                    # if e.start == 6:
-                    #     print("BABAstart: {}\tend: {}\tweight: {}\t highest: {}\tnodeValues: {}\ti: {}\tbababa: {}\n".format(e.start, e.end, e.weight, self.highestNode, nodeValues, i, e.start in nodeValues.keys()))
                 if i in nodeValues.keys() or not canCalc:
                     i += 1
-                # print("i: {}\tcanCalc: {}".format(i, canCalc))
-            # print(nodeValues.items())
-            # acc = 0
-            # for e in [a for a in self.edges if a.end == i]:
-            #     if e.start == 6:
-            #         print("start: {}\tend: {}\tweight: {}\t highest: {}\tnodeValues: {}\ti: {}\tbababa: {}\n".format(e.start, e.end, e.weight, self.highestNode, nodeValues, i, e.start in nodeValues.keys()))
-            #     acc += nodeValues[e.start] * e.weight
             nodeValues[i] = acc
-            # nodeValues[i] = reduce(self.edges, lambda acc, elem: (nodeValues[elem.start] * elem.weight) + acc if elem.end == i else acc, 0)
             if nodeValues[i] < 0:
                 nodeValues[i] = 0
             flag = False
@@ -174,6 +164,11 @@ class Edge:
     #Edge.copy(void): Edge
     def copy(self):
         return Edge(self.start, self.end, self.weight)
+
+
+
+
+
 
 class TabQAgent(object):
     """Tabular Q-learning agent for discrete state/action spaces."""
