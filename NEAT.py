@@ -22,17 +22,25 @@ def fitness(nn):
     importantTests = [([255, 0, 0], 0), ([0, 255, 0], 1), ([0, 0, 255], 2)]
     for imp in importantTests:
         correctAnswer = imp[1]
-        out = nn.computeOutput(imp[0])
-        wrong = [0, 1, 2]
-        wrong.pop(correctAnswer)
-        s += out[correctAnswer] - (out[wrong[0]] + out[wrong[1]])
+        out = maxIndex(nn.computeOutput(imp[0]))
+        if out == correctAnswer:
+        	s += 3
+        else:
+        	s -= 3
+        # wrong = [0, 1, 2]
+        # wrong.pop(correctAnswer)
+        # s += out[correctAnswer] - (out[wrong[0]] + out[wrong[1]])
     for i in range(200):
         pixel = [random.random() * 255, random.random() * 255, random.random() * 255]
         correctAnswer = maxIndex(pixel)
-        out = nn.computeOutput(pixel)
-        wrong = [0, 1, 2]
-        wrong.pop(correctAnswer)
-        s += out[correctAnswer] - (out[wrong[0]] + out[wrong[1]])
+        out = maxIndex(nn.computeOutput(pixel))
+        if out == correctAnswer:
+        	s += 3
+        else:
+        	s -= 3
+        # wrong = [0, 1, 2]
+        # wrong.pop(correctAnswer)
+        # s += out[correctAnswer] - (out[wrong[0]] + out[wrong[1]])
     return s
     # return random() #for now i guess
 
@@ -104,6 +112,16 @@ class NeuralNetwork:
                 continue
             acc = 0
             for e in dependObj.dependsOn:
+                if e.start not in nodeValues.keys():
+                    print([(a.start, a.end) for a in dependObj.dependsOn])
+                    t = None
+                    for a in self.depend:
+                    	if a.nodeNum == e.start:
+                    		t = a
+                    print("{}'s dependsAll: {}".format(t.nodeNum, t.allDependants))
+                    print("{}'s dependsAll: {}".format(e.end, dependObj.allDependants))
+                    print(nodeValues)
+                    print([a.nodeNum for a in self.depend])
                 acc += nodeValues[e.start] * e.weight
             nodeValues[dependObj.nodeNum] = acc
         return [nodeValues[i] for i in self.outputs]
@@ -118,7 +136,6 @@ class NeuralNetwork:
         self.edges.append(newE2)
         for dependObj in self.depend:
             if dependObj.nodeNum == edge.end:
-                dependObj.nodeNum = edge.end
                 dependObj.dependsOn = [newE2] + [u for u in dependObj.dependsOn if u.start != edge.start]
                 dependObj.allDependants = [self.highestNode] + dependObj.allDependants 
             elif edge.end in dependObj.allDependants:
@@ -168,13 +185,15 @@ class NeuralNetwork:
                     for toAdd in startAllDependants:
                         if toAdd not in dependObj.allDependants:
                             dependObj.allDependants.append(toAdd)
-                    dependObj.allDependants.append(start)
+                    if start not in dependObj.allDependants:
+                    	dependObj.allDependants.append(start)
                     dependObj.dependsOn.append(e)
                 elif e.end in dependObj.allDependants:
                     for toAdd in startAllDependants:
                         if toAdd not in dependObj.allDependants:
                             dependObj.allDependants.append(toAdd)
-                    dependObj.allDependants.append(start)
+                    if start not in dependObj.allDependants:
+                    	dependObj.allDependants.append(start)
             self.depend.sort(key=lambda x: len(x.allDependants))
 
 
@@ -182,7 +201,10 @@ class NeuralNetwork:
     def mutateEdge(self):
         edgeIndex = int(math.floor(len(self.edges) * random.random()))
         ALPHA = 0.5
-        self.edges[edgeIndex].weight += ((2 * random.random()) - 1) * ALPHA
+        d = random.choice(self.depend)
+        while len(d.dependsOn) == 0:
+        	d = random.choice(self.depend)
+        random.choice(d.dependsOn).weight += ((2 * random.random()) - 1) * ALPHA
 
     def copy(self):
         out = NeuralNetwork(len(self.inputs), len(self.outputs))
@@ -192,7 +214,6 @@ class NeuralNetwork:
         out.outputs = self.outputs
         out.depend = [DependObj(a.nodeNum, [i.copy() for i in a.dependsOn], [i for i in a.allDependants]) for a in self.depend]
         out.depend.sort(key=lambda x: len(x.allDependants))
-
         return out
 
     def mutate(self):
@@ -216,12 +237,18 @@ class Edge:
     def copy(self):
         return Edge(self.start, self.end, self.weight)
 
+    def __str__(self):
+    	return "<{} to {} with weight {}>".format(self.start, self.end, self.weight)
+
+    def __repr__(self):
+    	return str(self)
+
 gen = Generation(80, inputSize=3, outputSize=3)
 fitnesses = [fitness(i) for i in gen.nns]
 print("Initial fitness: {}".format(sum(fitnesses) / len(fitnesses)))
 for i in range(int(input("How many generations: ")) - 1):
-    gen = Generation(80, prev=gen)
-    print("finished generation {}.".format(i + 2))
+	gen = Generation(80, prev=gen)
+	print("finished generation {}.".format(i + 2))
 fitnesses = [fitness(i) for i in gen.nns]
 print("Final fitness: {}".format(sum(fitnesses) / len(fitnesses)))
 while True:
