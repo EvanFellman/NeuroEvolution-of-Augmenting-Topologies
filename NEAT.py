@@ -112,16 +112,6 @@ class NeuralNetwork:
                 continue
             acc = 0
             for e in dependObj.dependsOn:
-                if e.start not in nodeValues.keys():
-                    print([(a.start, a.end) for a in dependObj.dependsOn])
-                    t = None
-                    for a in self.depend:
-                    	if a.nodeNum == e.start:
-                    		t = a
-                    print("{}'s dependsAll: {}".format(t.nodeNum, t.allDependants))
-                    print("{}'s dependsAll: {}".format(e.end, dependObj.allDependants))
-                    print(nodeValues)
-                    print([a.nodeNum for a in self.depend])
                 acc += nodeValues[e.start] * e.weight
             nodeValues[dependObj.nodeNum] = acc
         return [nodeValues[i] for i in self.outputs]
