@@ -91,13 +91,13 @@ class NeuralNetwork:
         self.edges = []
         self.inputs = list(range(inputSize))
         self.outputs = list(range(inputSize, inputSize + outputSize))
-        self.depend = [DependObj(i, [], []) for i in (self.inputs + self.outputs) ]
+        self.depend = [DependObj(i, [], {}) for i in (self.inputs + self.outputs) ]
         for inputNode in self.inputs:
             for outputNode in self.outputs:
                 e = Edge(inputNode, outputNode)
                 self.edges.append(e)
                 self.depend[outputNode].dependsOn.append(e)
-                self.depend[outputNode].allDependants.append(inputNode)
+                self.depend[outputNode].allDependants[inputNode] = True
         #This is makes it go super speedy
         self.depend.sort(key=lambda x: len(x.allDependants))
         self.highestNode = inputSize + outputSize - 1
@@ -119,7 +119,7 @@ class NeuralNetwork:
     def addNode(self):
         self.highestNode += 1
         edgeIndex = int(math.floor(len(self.edges) * random.random()))
-        edge = self.edges.pop(random.choice(range(len(self.edges))))#self.edges.pop(edgeIndex)
+        edge = self.edges.pop(random.choice(range(len(self.edges))))
         newE1 = Edge(edge.start, self.highestNode, edge.weight)
         newE2 = Edge(self.highestNode, edge.end, 1)
         self.edges.append(newE1)
@@ -127,13 +127,15 @@ class NeuralNetwork:
         for dependObj in self.depend:
             if dependObj.nodeNum == edge.end:
                 dependObj.dependsOn = [newE2] + [u for u in dependObj.dependsOn if u.start != edge.start]
-                dependObj.allDependants = [self.highestNode] + dependObj.allDependants 
+                dependObj.allDependants[self.highestNode] = True
             elif edge.end in dependObj.allDependants:
-                dependObj.allDependants.append(self.highestNode)
+                dependObj.allDependants[self.highestNode] = True
         for dependObj in self.depend:
             if dependObj.nodeNum == newE1.start:
-                self.depend.append(DependObj(newE1.end, [newE1], [newE1.start] + dependObj.allDependants))
-        self.depend.sort(key=lambda x: len(x.allDependants))
+            	allD = dependObj.allDependants.copy()
+            	allD[newE1.start] = True
+            	self.depend.append(DependObj(newE1.end, [newE1], allD))
+        self.depend.sort(key=lambda x: len(x.allDependants.keys()))
 
     def addEdge(self):
         allPairs = []
@@ -173,20 +175,14 @@ class NeuralNetwork:
             for dependObj in self.depend:
                 if dependObj.nodeNum == e.end:
                     for toAdd in startAllDependants:
-                        if toAdd not in dependObj.allDependants:
-                            dependObj.allDependants.append(toAdd)
-                    if start not in dependObj.allDependants:
-                    	dependObj.allDependants.append(start)
+                        dependObj.allDependants[toAdd] = True
+                    dependObj.allDependants[start] = True
                     dependObj.dependsOn.append(e)
                 elif e.end in dependObj.allDependants:
                     for toAdd in startAllDependants:
-                        if toAdd not in dependObj.allDependants:
-                            dependObj.allDependants.append(toAdd)
-                    if start not in dependObj.allDependants:
-                    	dependObj.allDependants.append(start)
+                        dependObj.allDependants[toAdd] = True
+                    dependObj.allDependants[start] = True
             self.depend.sort(key=lambda x: len(x.allDependants))
-
-
 
     def mutateEdge(self):
         edgeIndex = int(math.floor(len(self.edges) * random.random()))
@@ -202,7 +198,7 @@ class NeuralNetwork:
         out.highestNode = self.highestNode
         out.inputs = self.inputs
         out.outputs = self.outputs
-        out.depend = [DependObj(a.nodeNum, [i.copy() for i in a.dependsOn], [i for i in a.allDependants]) for a in self.depend]
+        out.depend = [DependObj(a.nodeNum, [i.copy() for i in a.dependsOn], a.allDependants.copy()) for a in self.depend]
         out.depend.sort(key=lambda x: len(x.allDependants))
         return out
 
